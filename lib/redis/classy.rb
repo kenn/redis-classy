@@ -3,8 +3,6 @@ require 'redis-namespace'
 class Redis
   class Classy
     class << self
-      # Here we use a class instance variable, so that different databases can be
-      # assigned for each class.
       attr_accessor :db
 
       def inherited(subclass)
@@ -16,12 +14,14 @@ class Redis
       end
     end
 
+    attr_accessor :key
+
     def initialize(key)
-      @key = key
+      self.key = key
     end
 
     def method_missing(method_name, *args)
-      self.class.send(method_name, @key, *args)
+      self.class.send(method_name, self.key, *args)
     end
   end
 end
