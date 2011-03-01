@@ -10,66 +10,66 @@ Requies the redis-namespace gem.
 
 == Install
 
-    gem install redis-classy
+ gem install redis-classy
 
-= Usage
+== Usage
 
 In Gemfile:
 
-    gem "redis-classy"
+ gem "redis-classy"
 
 In your initializer:
 
-    Redis::Classy.db = Redis.new
+ Redis::Classy.db = Redis.new
 
 Now you can write models that inherit the Redis::Classy class, automatically prefixing keys with its class name.
 
-    class UniqueUser < Redis::Classy
-      def self.nuke
-        self.keys.each{|key| self.del(key) }
-      end
-    end
-    
-    UniqueUser.sadd "2011-02-28", @user_a.id
-    UniqueUser.sadd "2011-02-28", @user_b.id
-    UniqueUser.sadd "2011-03-01", @user_c.id
-    
-    UniqueUser.smembers "2011-02-28"
-    => ["123", "456"]
-    
-    UniqueUser.nuke
-    => ["2011-02-28", "2011-03-01"]
-    
-    UniqueUser.keys
-    => []
+ class UniqueUser < Redis::Classy
+   def self.nuke
+     self.keys.each{|key| self.del(key) }
+   end
+ end
+ 
+ UniqueUser.sadd "2011-02-28", @user_a.id
+ UniqueUser.sadd "2011-02-28", @user_b.id
+ UniqueUser.sadd "2011-03-01", @user_c.id
+ 
+ UniqueUser.smembers "2011-02-28"
+ => ["123", "456"]
+ 
+ UniqueUser.nuke
+ => ["2011-02-28", "2011-03-01"]
+ 
+ UniqueUser.keys
+ => []
 
 In most cases you may be just fine with class methods, but by creating an instance with a key, even further binding is possible.
 
-    class Counter < Redis::Classy
-      def initialize(object)
-        super("#{object.class.name}:#{object.id}")
-      end
-    end
-    
-    counter = Counter.new(@room)
-    counter.incr
-    counter.incr
-    counter.get
-    => "2"
-    
-    counter.key
-    => "Room:123"
+ class Counter < Redis::Classy
+   def initialize(object)
+     super("#{object.class.name}:#{object.id}")
+   end
+ end
+ 
+ counter = Counter.new(@room)
+ counter.incr
+ counter.incr
+ counter.get
+ => "2"
+ 
+ counter.key
+ => "Room:123"
 
 You also have access to the non-namespaced, raw Redis instance via Redis::Classy.db
 
-    Redis::Classy.db.keys "UniqueUser:*"
-    => ["UniqueUser:2011-02-28", "UniqueUser:2011-03-01"]
-    
-    Redis::Classy.db.multi do
-      UniqueUser.sadd "2011-02-28", @user_a.id
-      UniqueUser.sadd "2011-02-28", @user_b.id
-    end
+ Redis::Classy.db.keys "UniqueUser:*"
+ => ["UniqueUser:2011-02-28", "UniqueUser:2011-03-01"]
+ 
+ Redis::Classy.db.multi do
+   UniqueUser.sadd "2011-02-28", @user_a.id
+   UniqueUser.sadd "2011-02-28", @user_b.id
+ end
 
 Since the "db" attribute is a class instance variable, you can dynamically assign different databases for each class.
 
-    UniqueUser.db = Redis::Namespace.new("UniqueUser", :redis => Redis.new(:host => "another.host"))
+ UniqueUser.db = Redis::Namespace.new("UniqueUser", :redis => Redis.new(:host => "another.host"))
