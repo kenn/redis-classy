@@ -5,7 +5,7 @@
 
 Gem::Specification.new do |s|
   s.name = %q{redis-classy}
-  s.version = "0.0.0"
+  s.version = "0.9.0"
 
   s.required_rubygems_version = Gem::Requirement.new(">= 0") if s.respond_to? :required_rubygems_version=
   s.authors = ["Kenn Ejima"]
@@ -20,18 +20,21 @@ Gem::Specification.new do |s|
     ".document",
     ".rspec",
     "Gemfile",
+    "Gemfile.lock",
     "LICENSE.txt",
     "README.rdoc",
     "Rakefile",
     "VERSION",
     "lib/redis-classy.rb",
+    "lib/redis/classy.rb",
+    "redis-classy.gemspec",
     "spec/redis-classy_spec.rb",
     "spec/spec_helper.rb"
   ]
   s.homepage = %q{http://github.com/kenn/redis-classy}
   s.licenses = ["MIT"]
   s.require_paths = ["lib"]
-  s.rubygems_version = %q{1.5.2}
+  s.rubygems_version = %q{1.5.3}
   s.summary = %q{Model-friendly base class for Redis}
   s.test_files = [
     "spec/redis-classy_spec.rb",
