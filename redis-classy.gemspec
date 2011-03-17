@@ -5,11 +5,11 @@
 
 Gem::Specification.new do |s|
   s.name = %q{redis-classy}
-  s.version = "0.9.0"
+  s.version = "0.9.1"
 
   s.required_rubygems_version = Gem::Requirement.new(">= 0") if s.respond_to? :required_rubygems_version=
   s.authors = ["Kenn Ejima"]
-  s.date = %q{2011-02-28}
+  s.date = %q{2011-03-16}
   s.description = %q{Make the prefix part of the Redis keys a class name for your model.}
   s.email = %q{kenn.ejima@gmail.com}
   s.extra_rdoc_files = [
