@@ -9,8 +9,8 @@ class Redis
         subclass.db = Redis::Namespace.new(subclass.name, :redis => self.db)
       end
 
-      def method_missing(method_name, *args)
-        self.db.send(method_name, *args)
+      def method_missing(method_name, *args, &block)
+        self.db.send(method_name, *args, &block)
       end
     end
 
@@ -20,8 +20,8 @@ class Redis
       self.key = key
     end
 
-    def method_missing(method_name, *args)
-      self.class.send(method_name, self.key, *args)
+    def method_missing(method_name, *args, &block)
+      self.class.send(method_name, self.key, *args, &block)
     end
   end
 end
