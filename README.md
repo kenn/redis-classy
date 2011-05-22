@@ -16,6 +16,10 @@ This library contains only 33 lines of code, yet powerful when you need better a
 
 Requies the `redis-namespace` gem.
 
+What's new:
+
+* v1.0.0: Play nice with Mongoid
+
 Synopsis
 --------
 

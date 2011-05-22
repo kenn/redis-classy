@@ -7,6 +7,8 @@ rescue Bundler::BundlerError => e
   $stderr.puts "Run `bundle install` to install missing gems"
   exit e.status_code
 end
+require 'rake/file_utils'
+include FileUtils
 
 require 'jeweler'
 Jeweler::Tasks.new do |gem|
