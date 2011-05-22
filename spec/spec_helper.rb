@@ -8,5 +8,6 @@ require 'redis-classy'
 Dir["#{File.dirname(__FILE__)}/support/**/*.rb"].each {|f| require f}
 
 RSpec.configure do |config|
-  
+  # Use database 15 for testing so we don't accidentally step on you real data.
+  Redis::Classy.db = Redis.new(:db => 15)
 end
