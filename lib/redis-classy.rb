@@ -1,1 +1,5 @@
-require File.dirname(__FILE__) + '/redis/classy'
+require 'redis-namespace'
+
+class Redis
+  autoload :Classy, 'redis/classy'
+end

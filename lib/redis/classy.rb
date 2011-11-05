@@ -1,5 +1,3 @@
-require 'redis-namespace'
-
 class Redis
   class Classy
     class << self

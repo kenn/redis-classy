@@ -24,5 +24,5 @@ Jeweler::RubygemsDotOrgTasks.new
 
 task :default => :spec
 task :spec do
-  exec "rspec spec/redis-classy_spec.rb"
+  exec "rspec spec"
 end
