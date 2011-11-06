@@ -10,16 +10,17 @@ class Something < Redis::Classy
 end
 
 Something.set 'foo', 'bar'      # equivalent of => redis.set 'Something:foo', 'bar'
-Something.get 'foo'             #               => redis.get 'Something:foo'
+Something.get 'foo'             # equivalent of => redis.get 'Something:foo'
  => "bar"
 ```
 
+All methods are delegated to the `redis-namespace` gems.
+
 This library contains only 30+ lines of code, yet powerful when you need better abstraction on Redis objects to keep things organized.
 
-Requies the `redis-namespace` gem.
+### What's new:
 
-What's new:
-
+* v1.0.1: Relaxed version dependency on redis-namespace
 * v1.0.0: Play nice with Mongoid
 
 Synopsis
@@ -36,17 +37,22 @@ With the `redis-namespace` gem, you can add a prefix in the following manner:
 
 ```ruby
 redis_ns = Redis::Namespace.new('ns', :redis => redis)
-redis_ns['foo'] = 'bar'      # equivalent of => redis.set 'ns:foo', 'bar'
+redis_ns['foo'] = 'bar'         # equivalent of => redis.set 'ns:foo', 'bar'
 ```
 
-Now, with the redis-classy gem, you could finally do:
+Now, with the `redis-classy` gem, you finally achieve a class-based encapsulation:
 
 ```ruby
 class Something < Redis::Classy
 end
 
-Something.set 'foo', 'bar'      # equivalent of => redis.set 'Prefix:foo', 'bar'
-Something.get 'foo'
+Something.set 'foo', 'bar'      # equivalent of => redis.set 'Something:foo', 'bar'
+Something.get 'foo'             # equivalent of => redis.get 'Something:foo'
+ => "bar"
+
+something = Something.new('foo')
+something.set 'bar'
+something.get
  => "bar"
 ```
 
@@ -64,14 +70,14 @@ In Gemfile:
 gem 'redis-classy'
 ```
 
-In config/initializers/redis_classy.rb:
+Register the Redis server: (e.g. in `config/initializers/redis_classy.rb` for Rails)
 
 ```ruby
-Redis::Classy.db = Redis.new
+Redis::Classy.db = Redis.new(:host => 'localhost')
 ```
 
-Now you can write models that inherit the Redis::Classy class, automatically prefixing keys with its class name.
-You can use any Redis commands on the class, since they are simply passed to the Redis instance.
+Now you can write models that inherit `Redis::Classy`, automatically prefixing keys with its class name.
+You can use any Redis commands on the class, as they are eventually passed to the `redis` gem.
 
 ```ruby
 class UniqueUser < Redis::Classy
@@ -80,9 +86,9 @@ class UniqueUser < Redis::Classy
   end
 end
 
-UniqueUser.sadd '2011-02-28', @user_a.id
-UniqueUser.sadd '2011-02-28', @user_b.id
-UniqueUser.sadd '2011-03-01', @user_c.id
+UniqueUser.sadd '2011-02-28', 123
+UniqueUser.sadd '2011-02-28', 456
+UniqueUser.sadd '2011-03-01', 789
 
 UniqueUser.smembers '2011-02-28'
  => ["123", "456"]
@@ -109,24 +115,27 @@ end
 @room = Room.create
 
 counter = Counter.new(@room)
+counter.key
+ => "Room:123"
+
 counter.incr
 counter.incr
 counter.get
  => "2"
-
-counter.key
- => "Room:123"
 ```
 
-You also have access to the non-namespaced, raw Redis instance via Redis::Classy
+You also have access to the non-namespaced, raw Redis instance via `Redis::Classy`.
 
 ```ruby
+Redis::Classy.keys
+ => ["UniqueUser:2011-02-28", "UniqueUser:2011-03-01", "Counter:Room:123"]
+
 Redis::Classy.keys 'UniqueUser:*'
  => ["UniqueUser:2011-02-28", "UniqueUser:2011-03-01"]
 
 Redis::Classy.multi do
-  UniqueUser.sadd '2011-02-28', @user_a.id
-  UniqueUser.sadd '2011-02-28', @user_b.id
+  UniqueUser.sadd '2011-02-28', 123
+  UniqueUser.sadd '2011-02-28', 456
 end
 ```
 

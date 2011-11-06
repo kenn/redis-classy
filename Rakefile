@@ -22,6 +22,12 @@ Jeweler::Tasks.new do |gem|
 end
 Jeweler::RubygemsDotOrgTasks.new
 
+desc "Flush the test database"
+task :flushdb do
+  require 'redis'
+  Redis.new(:db => 15).flushdb
+end
+
 task :default => :spec
 task :spec do
   exec "rspec spec"
