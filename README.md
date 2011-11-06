@@ -31,6 +31,8 @@ With the vanilla `redis` gem, you've been doing this:
 ```ruby
 redis = Redis.new
 redis.set 'foo', 'bar'
+redis.get 'foo'
+ => "bar"
 ```
 
 With the `redis-namespace` gem, you can add a prefix in the following manner:
@@ -38,6 +40,8 @@ With the `redis-namespace` gem, you can add a prefix in the following manner:
 ```ruby
 redis_ns = Redis::Namespace.new('ns', :redis => redis)
 redis_ns['foo'] = 'bar'         # equivalent of => redis.set 'ns:foo', 'bar'
+redis_ns['foo']                 # equivalent of => redis.get 'ns:foo'
+ => "bar"
 ```
 
 Now, with the `redis-classy` gem, you finally achieve a class-based encapsulation:
@@ -86,16 +90,17 @@ class UniqueUser < Redis::Classy
   end
 end
 
-UniqueUser.sadd '2011-02-28', 123
-UniqueUser.sadd '2011-02-28', 456
-UniqueUser.sadd '2011-03-01', 789
+UniqueUser.sadd '2011-02-28', '123'
+UniqueUser.sadd '2011-02-28', '456'
+UniqueUser.sadd '2011-03-01', '789'
 
 UniqueUser.smembers '2011-02-28'
  => ["123", "456"]
 
-UniqueUser.nuke
+UniqueUser.keys
  => ["2011-02-28", "2011-03-01"]
 
+UniqueUser.nuke
 UniqueUser.keys
  => []
 ```
@@ -134,8 +139,8 @@ Redis::Classy.keys 'UniqueUser:*'
  => ["UniqueUser:2011-02-28", "UniqueUser:2011-03-01"]
 
 Redis::Classy.multi do
-  UniqueUser.sadd '2011-02-28', 123
-  UniqueUser.sadd '2011-02-28', 456
+  UniqueUser.sadd '2011-02-28', '123'
+  UniqueUser.sadd '2011-02-28', '456'
 end
 ```
 
