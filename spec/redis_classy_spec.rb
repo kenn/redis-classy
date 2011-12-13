@@ -1,14 +1,22 @@
-require File.expand_path(File.dirname(__FILE__) + '/spec_helper')
+require 'spec_helper'
 
 class Something < Redis::Classy
 end
 
+class Another < Something
+end
+
+module Deep
+  class Klass < Another
+  end
+end
+
 describe "RedisClassy" do
-  before(:each) do
+  before do
     Redis::Classy.flushdb
   end
 
-  after(:each) do
+  after do
     Redis::Classy.flushdb
   end
 
@@ -18,9 +26,16 @@ describe "RedisClassy" do
 
   it "should prepend class name to the key" do
     Something.set("foo", "bar")
+    Something.keys.should == ["foo"]
+    Redis::Classy.keys.should include "Something:foo"
 
-    Something.keys.should     == ["foo"]
-    Redis::Classy.keys.should == ["Something:foo"]
+    Another.set("foo", "bar")
+    Another.keys.should == ["foo"]
+    Redis::Classy.keys.should include "Another:foo"
+
+    Deep::Klass.set("foo", "bar")
+    Deep::Klass.keys.should == ["foo"]
+    Redis::Classy.keys.should include "Deep::Klass:foo"
   end
 
   it "should delegate class methods" do

@@ -4,7 +4,7 @@ class Redis
       attr_accessor :db
 
       def inherited(subclass)
-        subclass.db = Redis::Namespace.new(subclass.name, :redis => self.db)
+        subclass.db = Redis::Namespace.new(subclass.name, :redis => Redis::Classy.db)
       end
 
       def method_missing(method_name, *args, &block)
