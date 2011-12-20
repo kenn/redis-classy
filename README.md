@@ -1,6 +1,8 @@
 Redis Classy
 ============
 
+[![Build Status](https://secure.travis-ci.org/kenn/redis-classy.png)](http://travis-ci.org/kenn/redis-classy)
+
 Class-style namespace prefixing for Redis.
 
 With Redis Classy, class names become the prefix part of the Redis keys.
