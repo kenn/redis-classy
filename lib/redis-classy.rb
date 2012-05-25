@@ -1,5 +1,3 @@
 require 'redis-namespace'
-
-class Redis
-  autoload :Classy, 'redis/classy'
-end
+require 'redis/classy'
+require 'redis/classy/version'
