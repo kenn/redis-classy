@@ -4,16 +4,17 @@ class Redis
       attr_accessor :db
 
       def inherited(subclass)
-        subclass.db = Redis::Namespace.new(subclass.name, :redis => Redis::Classy.db)
+        subclass.db = Redis::Namespace.new(subclass.name, :redis => Redis::Classy.db) if Redis::Classy.db
       end
 
       def method_missing(method_name, *args, &block)
-        self.db.send(method_name, *args, &block)
+        db.send(method_name, *args, &block)
       end
 
       Redis::Namespace::COMMANDS.keys.each do |key|
-        define_method(key) do |*args|
-          self.db.send(key, *args)
+        define_method(key) do |*args, &block|
+          raise 'Redis::Classy.db is not assigned' unless db
+          db.send(key, *args, &block)
         end
       end
     end
@@ -21,11 +22,11 @@ class Redis
     attr_accessor :key
 
     def initialize(key)
-      self.key = key
+      @key = key
     end
 
     def method_missing(method_name, *args, &block)
-      self.class.send(method_name, self.key, *args, &block)
+      self.class.send(method_name, key, *args, &block)
     end
   end
 end
