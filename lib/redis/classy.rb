@@ -7,14 +7,15 @@ class Redis
         subclass.db = Redis::Namespace.new(subclass.name, :redis => Redis::Classy.db) if Redis::Classy.db
       end
 
-      def method_missing(method_name, *args, &block)
-        db.send(method_name, *args, &block)
+      def method_missing(name, *args, &block)
+        return super unless db.class.instance_methods(false).include?(name)
+        db.send(name, *args, &block)
       end
 
-      Redis::Namespace::COMMANDS.keys.each do |key|
-        define_method(key) do |*args, &block|
+      Redis::Namespace::COMMANDS.keys.each do |command|
+        define_method(command) do |*args, &block|
           raise 'Redis::Classy.db is not assigned' unless db
-          db.send(key, *args, &block)
+          db.send(command, *args, &block)
         end
       end
     end
@@ -25,8 +26,8 @@ class Redis
       @key = key
     end
 
-    def method_missing(method_name, *args, &block)
-      self.class.send(method_name, key, *args, &block)
+    def method_missing(name, *args, &block)
+      self.class.send(name, @key, *args, &block)
     end
   end
 end

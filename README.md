@@ -22,6 +22,8 @@ This library contains only 30+ lines of code, yet powerful when you need better 
 
 ### What's new:
 
+* v1.1.1: Raise exception when Redis::Classy.db is not assigned
+* v1.1.0: Explicitly require all files
 * v1.0.1: Relaxed version dependency on redis-namespace
 * v1.0.0: Play nice with Mongoid
 
@@ -151,6 +153,19 @@ Since the `db` attribute is a class instance variable, you can dynamically assig
 ```ruby
 UniqueUser.db = Redis::Namespace.new('UniqueUser', :redis => Redis.new(:host => 'another.host'))
 ```
+
+Unicorn support
+---------------
+
+If you run fork-based app servers such as **Unicorn** or **Passenger**, you need to reconnect to the Redis after forking.
+
+```ruby
+after_fork do
+  Redis::Classy.db.client.reconnect
+end
+```
+
+Note that since Redis Classy assigns a namespaced Redis instance upon the inheritance event of each subclass (`class Something < Redis::Classy`), reconnecting the master (non-namespaced) connection that is referenced from all subclasses should probably be the safest and the most efficient way to survive a forking event.
 
 Reference
 ---------
