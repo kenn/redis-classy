@@ -9,7 +9,7 @@ class Redis
       end
 
       def delegatables
-        @delegatables ||= db.class.instance_methods(false).map(&:to_sym) # ruby1.8 returns strings
+        @delegatables ||= Redis::Classy.db.class.instance_methods(false).map(&:to_sym) # ruby1.8 returns strings
       end
 
       def method_missing(command, *args, &block)

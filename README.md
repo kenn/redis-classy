@@ -22,6 +22,7 @@ This library contains only 30+ lines of code, yet powerful when you need better 
 
 ### What's new:
 
+* v1.2.0: Raise NoMethodError when commands are not found in redis-rb.
 * v1.1.1: Raise exception when Redis::Classy.db is not assigned
 * v1.1.0: Explicitly require all files
 * v1.0.1: Relaxed version dependency on redis-namespace
