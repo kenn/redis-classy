@@ -4,17 +4,21 @@ class Redis
       attr_accessor :db
 
       def inherited(subclass)
-        subclass.db = Redis::Namespace.new(subclass.name, :redis => Redis::Classy.db) if Redis::Classy.db
+        raise 'Redis::Classy.db is not assigned' unless Redis::Classy.db
+        subclass.db = Redis::Namespace.new(subclass.name, :redis => Redis::Classy.db)
+      end
+
+      def delegatables
+        @delegatables ||= db.class.instance_methods(false).map(&:to_sym) # ruby1.8 returns strings
       end
 
       def method_missing(name, *args, &block)
-        return super unless db.class.instance_methods(false).include?(name)
+        return super unless delegatables.include?(name)
         db.send(name, *args, &block)
       end
 
       Redis::Namespace::COMMANDS.keys.each do |command|
         define_method(command) do |*args, &block|
-          raise 'Redis::Classy.db is not assigned' unless db
           db.send(command, *args, &block)
         end
       end
