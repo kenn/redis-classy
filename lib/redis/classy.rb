@@ -12,9 +12,9 @@ class Redis
         @delegatables ||= db.class.instance_methods(false).map(&:to_sym) # ruby1.8 returns strings
       end
 
-      def method_missing(name, *args, &block)
-        return super unless delegatables.include?(name)
-        db.send(name, *args, &block)
+      def method_missing(command, *args, &block)
+        return super unless delegatables.include?(command)
+        db.send(command, *args, &block)
       end
 
       Redis::Namespace::COMMANDS.keys.each do |command|
@@ -30,8 +30,8 @@ class Redis
       @key = key
     end
 
-    def method_missing(name, *args, &block)
-      self.class.send(name, @key, *args, &block)
+    def method_missing(command, *args, &block)
+      self.class.send(command, @key, *args, &block)
     end
   end
 end
