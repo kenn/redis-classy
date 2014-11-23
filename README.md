@@ -76,7 +76,7 @@ Something.on('foo').set('bar')  # equivalent of => redis.set 'Something:foo', 'b
 Something.on('foo').get         # => "bar"
 
 something = Something.new('foo')
-something.set 'bar'
+something.set 'bar'             # equivalent of => redis.set 'Something:foo', 'bar'
 something.get                   # => "bar"
 ```
 
