@@ -1,10 +1,16 @@
 class RedisClassy
   class << self
-    attr_accessor :redis
+    attr_writer :redis
 
-    def inherited(subclass)
-      raise Error.new('RedisClassy.redis is not assigned') unless RedisClassy.redis
-      subclass.redis = Redis::Namespace.new(subclass.name, redis: RedisClassy.redis)
+    def redis
+      @redis ||= begin
+        if self == RedisClassy
+          nil
+        else
+          raise Error.new('RedisClassy.redis is not assigned') if RedisClassy.redis.nil?
+          Redis::Namespace.new(self.name, redis: RedisClassy.redis)
+        end
+      end
     end
 
     def singletons(*args)
@@ -20,7 +26,7 @@ class RedisClassy
     end
 
     def keys(pattern = nil)
-      @redis.keys(pattern || '*')
+      redis.keys(pattern || '*')
     end
 
     def on(key)

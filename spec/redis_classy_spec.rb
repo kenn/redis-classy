@@ -13,6 +13,20 @@ describe RedisClassy do
     RedisClassy.redis.quit
   end
 
+  it 'raises RedisClassy::Error when connection is missing' do
+    begin
+      backup = RedisClassy.redis
+      RedisClassy.redis = nil
+
+      class NoConnection < RedisClassy
+      end
+
+      expect{ NoConnection.keys }.to raise_error(RedisClassy::Error)
+    ensure
+      RedisClassy.redis = backup
+    end
+  end
+
   it 'stores redis or redis-namespace' do
     expect(RedisClassy.redis.is_a?(Redis)).to be_truthy
     expect(RedisClassy.redis.is_a?(Redis::Namespace)).to be_falsy

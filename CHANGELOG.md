@@ -1,3 +1,7 @@
+## 2.1.0 2014-11-23
+
+  * Lazy connection loading
+
 ## 2.0.0 2014-11-23
 
   * New feature: `singletons` to support predefined keys
