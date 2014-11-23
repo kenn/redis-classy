@@ -20,7 +20,7 @@ class RedisClassy
     end
 
     def keys(pattern = nil)
-      redis.keys(pattern)
+      @redis.keys(pattern || '*')
     end
 
     def on(key)

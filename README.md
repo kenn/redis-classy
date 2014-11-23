@@ -4,7 +4,7 @@
 
 A very simple, class-based namespace prefixing and encapsulation for Redis. Key features include:
 
-- Establishes a maintainable convention by prefixing keys with the class name (e.g. "YourClass:123")
+- Establishes a maintainable convention by prefixing keys with the class name (e.g. `YourClass:123`)
 - Delegates all method calls to the [redis-rb](https://github.com/redis/redis-rb) within the namespace
 - Adds a better abstraction layer around Redis objects and commands
 
@@ -32,7 +32,7 @@ timer = Timer.new(123)
 timer.start
 timer.running?
 => true
-RedisClassy.redis.keys
+RedisClassy.keys
 => ["Timer:123"]
 ```
 
@@ -157,7 +157,7 @@ room = Room.create
 lock = Lock.new(room)
 ```
 
-When you need an access to the non-namespaced, raw Redis keys, it's available as `RedisClassy.keys`. Keep in mind that this method is very slow at O(N) computational complexity and potentially hazardous when you have many keys. [Read the details](http://redis.io/commands/keys)
+When you need an access to the non-namespaced, raw Redis keys, it's available as `RedisClass.keys`. Keep in mind that this method is very slow at O(N) computational complexity and potentially hazardous when you have many keys. [Read the details](http://redis.io/commands/keys)
 
 ```ruby
 RedisClassy.keys

@@ -20,6 +20,12 @@ describe RedisClassy do
     expect(Something.redis.is_a?(Redis::Namespace)).to be_truthy
   end
 
+  it 'gets keys' do
+    Something.on(:foo).set('bar')
+    expect(Something.keys).to eq(['foo'])
+    expect(RedisClassy.keys).to eq(['Something:foo'])
+  end
+
   it 'prepends class name to the key' do
     class Another < Something
     end
@@ -31,18 +37,18 @@ describe RedisClassy do
 
     Something.on(:foo).set('bar')
     expect(Something.on(:foo).keys).to eq(['foo'])
-    expect(RedisClassy.redis.keys.size).to eq(1)
-    expect(RedisClassy.redis.keys).to include 'Something:foo'
+    expect(RedisClassy.keys.size).to eq(1)
+    expect(RedisClassy.keys).to include 'Something:foo'
 
     Another.on(:foo).set('bar')
     expect(Another.on(:foo).keys).to eq(['foo'])
-    expect(RedisClassy.redis.keys.size).to eq(2)
-    expect(RedisClassy.redis.keys).to include 'Another:foo'
+    expect(RedisClassy.keys.size).to eq(2)
+    expect(RedisClassy.keys).to include 'Another:foo'
 
     Deep::Klass.on(:foo).set('bar')
     expect(Deep::Klass.on(:foo).keys).to eq(['foo'])
-    expect(RedisClassy.redis.keys.size).to eq(3)
-    expect(RedisClassy.redis.keys).to include 'Deep::Klass:foo'
+    expect(RedisClassy.keys.size).to eq(3)
+    expect(RedisClassy.keys).to include 'Deep::Klass:foo'
   end
 
   it 'delegates instance methods with the key binding' do
