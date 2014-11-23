@@ -32,11 +32,14 @@ timer = Timer.new(123)
 timer.start
 timer.running?
 => true
+
+Timer.keys
+=> ["123"]
 RedisClassy.keys
 => ["Timer:123"]
 ```
 
-The Timer class above is self-contained, and more readable than the standard Redis commands.
+The Timer class above is self-contained and more readable.
 
 This library is made intentionally small, yet powerful when you need better abstraction on Redis objects to keep things organized.
 
@@ -52,8 +55,7 @@ With the vanilla `redis` gem, you've been doing this:
 ```ruby
 redis = Redis.new
 redis.set 'foo', 'bar'
-redis.get 'foo'
- => "bar"
+redis.get 'foo'                 # => "bar"
 ```
 
 With the `redis-namespace` gem, you can add a prefix in the following manner:
@@ -61,8 +63,7 @@ With the `redis-namespace` gem, you can add a prefix in the following manner:
 ```ruby
 redis_ns = Redis::Namespace.new('ns', :redis => redis)
 redis_ns['foo'] = 'bar'         # equivalent of => redis.set 'ns:foo', 'bar'
-redis_ns['foo']                 # equivalent of => redis.get 'ns:foo'
- => "bar"
+redis_ns['foo']                 # => "bar"
 ```
 
 Now, with the `redis-classy` gem, you finally achieve a class-based naming convention:
@@ -71,14 +72,12 @@ Now, with the `redis-classy` gem, you finally achieve a class-based naming conve
 class Something < RedisClassy
 end
 
-Something.on('foo').set('bar')     # equivalent of => redis.set 'Something:foo', 'bar'
-Something.on('foo').get            # equivalent of => redis.get 'Something:foo'
- => "bar"
+Something.on('foo').set('bar')  # equivalent of => redis.set 'Something:foo', 'bar'
+Something.on('foo').get         # => "bar"
 
 something = Something.new('foo')
 something.set 'bar'
-something.get
- => "bar"
+something.get                   # => "bar"
 ```
 
 Usage
@@ -96,7 +95,7 @@ Register the Redis server: (e.g. in `config/initializers/redis_classy.rb` for Ra
 RedisClassy.redis = Redis.current
 ```
 
-Create a class that inherits RedisClassy. For Rails projects, you can put it in `app/redis/cache.rb` for auto- and eager-loading:
+Create a class that inherits RedisClassy. (e.g. in `app/redis/cache.rb` for Rails, for auto- and eager-loading)
 
 ```ruby
 class Cache < RedisClassy
@@ -157,7 +156,7 @@ room = Room.create
 lock = Lock.new(room)
 ```
 
-When you need an access to the non-namespaced, raw Redis keys, it's available as `RedisClass.keys`. Keep in mind that this method is very slow at O(N) computational complexity and potentially hazardous when you have many keys. [Read the details](http://redis.io/commands/keys)
+When you need an access to the non-namespaced, raw Redis keys, it's available as `RedisClass.keys`. Keep in mind that this method is very slow at O(N) computational complexity and potentially hazardous when you have many keys. [Read the details](http://redis.io/commands/keys).
 
 ```ruby
 RedisClassy.keys
@@ -167,7 +166,7 @@ RedisClassy.keys 'Stats:*'
 => ["Stats:median", "Stats:average"]
 ```
 
-Since the `redis` attribute is a class instance variable, you can dynamically assign different databases for each class.
+Since the `redis` attribute is a class instance variable, you can dynamically assign different databases for each class, without affecting other classes.
 
 ```ruby
 Cache.redis = Redis::Namespace.new('Cache', redis: Redis.new(host: 'another.host'))
