@@ -3,7 +3,7 @@ class RedisClassy
     attr_accessor :redis
 
     def inherited(subclass)
-      raise 'RedisClassy.redis is not assigned' unless RedisClassy.redis
+      raise Error.new('RedisClassy.redis is not assigned') unless RedisClassy.redis
       subclass.redis = Redis::Namespace.new(subclass.name, redis: RedisClassy.redis)
     end
 
@@ -70,4 +70,6 @@ class RedisClassy
       super
     end
   end
+
+  Error = Class.new(StandardError)
 end

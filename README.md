@@ -1,90 +1,51 @@
-Redis Classy
-============
+# Redis Classy
 
 [![Build Status](https://secure.travis-ci.org/kenn/redis-classy.png)](http://travis-ci.org/kenn/redis-classy)
 
-Class-style namespace prefixing for Redis.
+A very simple, class-based namespace prefixing and encapsulation for Redis. Key features include:
 
-With Redis Classy, class names become the prefix part of the Redis keys.
+- Establishes a maintainable convention by prefixing keys with the class name (e.g. "YourClass:123")
+- Delegates all method calls to the [redis-rb](https://github.com/redis/redis-rb) within the namespace
+- Adds a better abstraction layer around Redis objects and commands
 
-```ruby
-class Something < RedisClassy
-end
-
-Something.on('foo').set('bar')      # equivalent of => redis.set 'Something:foo', 'bar'
-Something.on('foo').get             # equivalent of => redis.get 'Something:foo'
- => "bar"
-```
+Here's an example:
 
 ```ruby
-class Counter < RedisClassy
-  singleton
+class Timer < RedisClassy
+  def start
+    pipelined do
+      set Time.now.to_i
+      expire 120.seconds
+    end
+  end
+
+  def stop
+    del
+  end
+
+  def running?
+    !!get
+  end
 end
 
-Counter.incr    # 'Counter:singleton' => '1'
-Counter.incr    # 'Counter:singleton' => '2'
-Counter.get
- => '2'
+timer = Timer.new(123)
+timer.start
+timer.running?
+=> true
+RedisClassy.redis.keys
+=> ["Timer:123"]
 ```
 
-``` ruby
-class Stats < RedisClassy
-  singletons :median, :average
-end
-
-ages = [21,22,24,28,30]
-Stats.median.set  ages[ages.size/2]           # 'Stats:median'  => '24'
-Stats.average.set ages.inject(:+)/ages.size   # 'Stats:average' => '25'
-Stats.median.get
- => '24'
-Stats.average.get
- => '25'
-```
-
-All methods are delegated to the `redis-namespace` gems.
+The Timer class above is self-contained, and more readable than the standard Redis commands.
 
 This library is made intentionally small, yet powerful when you need better abstraction on Redis objects to keep things organized.
 
-### Why does version 2 change the API?
+### UPGRADING FROM v1
 
-Redis Classy has been around for almost 4 years, and successfully used in production. While useful, the biggest pain point was the heavy dependency on class methods.
+[**An important message about upgrading from 1.x**](UPGRADING.md)
 
-Normally, you would think models in the way you think of ActiveRecord:
 
-```ruby
-user = User.find(123)
-user.name = 'kenn'
-user.save
-```
-
-However, the most attractive feature of Redis is atomic operations, and fetch-modify-write is not the way we get the most out of Redis. Therefore, it was tempting to do something in one shot:
-
-```ruby
-# Redis Classy v1
-RedisUser.set '123', 'kenn'
-```
-
-As almost all operations were done in one shot, it seemed awkward to do like:
-
-```ruby
-# Redis Classy v1 and v2
-RedisUser.new('123').set('kenn')
-```
-
-Why would you instantiate an object if it will be immediately consumed in the same method chain?
-
-But it turned out that having all methods at instance level was way more powerful, and cleaner.
-
-### What's new:
-
-* v1.2.0: Raise NoMethodError when commands are not found in redis-rb.
-* v1.1.1: Raise exception when Redis::Classy.db is not assigned
-* v1.1.0: Explicitly require all files
-* v1.0.1: Relaxed version dependency on redis-namespace
-* v1.0.0: Play nice with Mongoid
-
-Synopsis
---------
+## redis-rb vs redis-namespace vs redis-classy
 
 With the vanilla `redis` gem, you've been doing this:
 
@@ -104,7 +65,7 @@ redis_ns['foo']                 # equivalent of => redis.get 'ns:foo'
  => "bar"
 ```
 
-Now, with the `redis-classy` gem, you finally achieve a class-based encapsulation:
+Now, with the `redis-classy` gem, you finally achieve a class-based naming convention:
 
 ```ruby
 class Something < RedisClassy
@@ -120,11 +81,6 @@ something.get
  => "bar"
 ```
 
-Install
--------
-
-    gem install redis-classy
-
 Usage
 -----
 
@@ -137,77 +93,84 @@ gem 'redis-classy'
 Register the Redis server: (e.g. in `config/initializers/redis_classy.rb` for Rails)
 
 ```ruby
-RedisClassy.redis = Redis.new(:host => 'localhost')
+RedisClassy.redis = Redis.current
 ```
 
-Now you can write models that inherit `RedisClassy`, automatically prefixing keys with its class name.
-You can use any Redis commands on the class, as they are eventually passed to the `redis` gem.
+Create a class that inherits RedisClassy. For Rails projects, you can put it in `app/redis/cache.rb` for auto- and eager-loading:
 
 ```ruby
-class UniqueUser < RedisClassy
-  def self.nuke
-    self.keys.each{|key| self.del(key) }
+class Cache < RedisClassy
+  def put(content)
+    pipelined do
+      set content
+      expire 5.seconds
+    end
   end
 end
 
-UniqueUser.sadd '2011-02-28', '123'
-UniqueUser.sadd '2011-02-28', '456'
-UniqueUser.sadd '2011-03-01', '789'
-
-UniqueUser.smembers '2011-02-28'
- => ["123", "456"]
-
-UniqueUser.keys
- => ["2011-02-28", "2011-03-01"]
-
-UniqueUser.nuke
-UniqueUser.keys
- => []
+cache = Cache.new(123)
+cache.put "This tape will self-destruct in five seconds. Good luck."
 ```
 
-In most cases you may be just fine with class methods, but by creating an instance with a key, even further binding is possible.
+Since the `on` method is added as a syntactic sugar for `new`, you can also run a command in one shot as well:
+
+```ruby
+Cache.on(123).persist
+```
+
+For convenience, singleton and predefined static keys are also supported.
 
 ```ruby
 class Counter < RedisClassy
-  def initialize(object)
-    super("#{object.class.name}:#{object.id}")
-  end
+  singleton
+end
+
+Counter.incr    # 'Counter:singleton' => '1'
+Counter.incr    # 'Counter:singleton' => '2'
+Counter.get     # => '2'
+```
+
+``` ruby
+class Stats < RedisClassy
+  singletons :median, :average
+end
+
+ages = [21,22,24,28,30]
+
+Stats.median.set  ages[ages.size/2]           # 'Stats:median'  => '24'
+Stats.average.set ages.inject(:+)/ages.size   # 'Stats:average' => '25'
+Stats.median.get    # => '24'
+Stats.average.get   # => '25'
+```
+
+Finally, you can also pass an arbitrary object that responds to `id` as a key. This is useful when used in combination with ActiveRecord, etc.
+
+```ruby
+class Lock < RedisClassy
 end
 
 class Room < ActiveRecord::Base
 end
 
-@room = Room.create
+room = Room.create
 
-counter = Counter.new(@room)
-counter.key
- => "Room:123"
-
-counter.incr
-counter.incr
-counter.get
- => "2"
+lock = Lock.new(room)
 ```
 
-You also have access to the non-namespaced, raw Redis instance via `RedisClassy`.
+When you need an access to the non-namespaced, raw Redis keys, it's available as `RedisClassy.keys`. Keep in mind that this method is very slow at O(N) computational complexity and potentially hazardous when you have many keys. [Read the details](http://redis.io/commands/keys)
 
 ```ruby
 RedisClassy.keys
- => ["UniqueUser:2011-02-28", "UniqueUser:2011-03-01", "Counter:Room:123"]
+=> ["Stats:median", "Stats:average", "Counter"]
 
-RedisClassy.keys 'UniqueUser:*'
- => ["UniqueUser:2011-02-28", "UniqueUser:2011-03-01"]
-
-RedisClassy.multi do
-  UniqueUser.sadd '2011-02-28', '123'
-  UniqueUser.sadd '2011-02-28', '456'
-end
+RedisClassy.keys 'Stats:*'
+=> ["Stats:median", "Stats:average"]
 ```
 
 Since the `redis` attribute is a class instance variable, you can dynamically assign different databases for each class.
 
 ```ruby
-UniqueUser.redis = Redis::Namespace.new('UniqueUser', :redis => Redis.new(:host => 'another.host'))
+Cache.redis = Redis::Namespace.new('Cache', redis: Redis.new(host: 'another.host'))
 ```
 
 Unicorn support
