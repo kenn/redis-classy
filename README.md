@@ -1,43 +1,61 @@
-Redis Classy
-============
+# Redis Classy
 
 [![Build Status](https://secure.travis-ci.org/kenn/redis-classy.png)](http://travis-ci.org/kenn/redis-classy)
 
-Class-style namespace prefixing for Redis.
+A very simple, class-based namespace prefixing and encapsulation for Redis. Key features include:
 
-With Redis Classy, class names become the prefix part of the Redis keys.
+- Establishes a maintainable convention by prefixing keys with the class name (e.g. `YourClass:123`)
+- Delegates all method calls to the [redis-rb](https://github.com/redis/redis-rb) within the namespace
+- Adds a better abstraction layer around Redis objects and commands
+
+Here's an example:
 
 ```ruby
-class Something < Redis::Classy
+class Timer < RedisClassy
+  def start
+    pipelined do
+      set Time.now.to_i
+      expire 120.seconds
+    end
+  end
+
+  def stop
+    del
+  end
+
+  def running?
+    !!get
+  end
 end
 
-Something.set 'foo', 'bar'      # equivalent of => redis.set 'Something:foo', 'bar'
-Something.get 'foo'             # equivalent of => redis.get 'Something:foo'
- => "bar"
+timer = Timer.new(123)
+timer.start
+timer.running?
+=> true
+
+Timer.keys
+=> ["123"]
+RedisClassy.keys
+=> ["Timer:123"]
 ```
 
-All methods are delegated to the `redis-namespace` gems.
+The Timer class above is self-contained and more readable.
 
-This library contains only 30+ lines of code, yet powerful when you need better abstraction on Redis objects to keep things organized.
+This library is made intentionally small, yet powerful when you need better abstraction on Redis objects to keep things organized.
 
-### What's new:
+### UPGRADING FROM v1
 
-* v1.2.0: Raise NoMethodError when commands are not found in redis-rb.
-* v1.1.1: Raise exception when Redis::Classy.db is not assigned
-* v1.1.0: Explicitly require all files
-* v1.0.1: Relaxed version dependency on redis-namespace
-* v1.0.0: Play nice with Mongoid
+[**An important message about upgrading from 1.x**](UPGRADING.md)
 
-Synopsis
---------
+
+## redis-rb vs redis-namespace vs redis-classy
 
 With the vanilla `redis` gem, you've been doing this:
 
 ```ruby
 redis = Redis.new
 redis.set 'foo', 'bar'
-redis.get 'foo'
- => "bar"
+redis.get 'foo'                 # => "bar"
 ```
 
 With the `redis-namespace` gem, you can add a prefix in the following manner:
@@ -45,30 +63,22 @@ With the `redis-namespace` gem, you can add a prefix in the following manner:
 ```ruby
 redis_ns = Redis::Namespace.new('ns', :redis => redis)
 redis_ns['foo'] = 'bar'         # equivalent of => redis.set 'ns:foo', 'bar'
-redis_ns['foo']                 # equivalent of => redis.get 'ns:foo'
- => "bar"
+redis_ns['foo']                 # => "bar"
 ```
 
-Now, with the `redis-classy` gem, you finally achieve a class-based encapsulation:
+Now, with the `redis-classy` gem, you finally achieve a class-based naming convention:
 
 ```ruby
-class Something < Redis::Classy
+class Something < RedisClassy
 end
 
-Something.set 'foo', 'bar'      # equivalent of => redis.set 'Something:foo', 'bar'
-Something.get 'foo'             # equivalent of => redis.get 'Something:foo'
- => "bar"
+Something.on('foo').set('bar')  # equivalent of => redis.set 'Something:foo', 'bar'
+Something.on('foo').get         # => "bar"
 
 something = Something.new('foo')
-something.set 'bar'
-something.get
- => "bar"
+something.set 'bar'             # equivalent of => redis.set 'Something:foo', 'bar'
+something.get                   # => "bar"
 ```
-
-Install
--------
-
-    gem install redis-classy
 
 Usage
 -----
@@ -82,77 +92,84 @@ gem 'redis-classy'
 Register the Redis server: (e.g. in `config/initializers/redis_classy.rb` for Rails)
 
 ```ruby
-Redis::Classy.db = Redis.new(:host => 'localhost')
+RedisClassy.redis = Redis.current
 ```
 
-Now you can write models that inherit `Redis::Classy`, automatically prefixing keys with its class name.
-You can use any Redis commands on the class, as they are eventually passed to the `redis` gem.
+Create a class that inherits RedisClassy. (e.g. in `app/redis/cache.rb` for Rails, for auto- and eager-loading)
 
 ```ruby
-class UniqueUser < Redis::Classy
-  def self.nuke
-    self.keys.each{|key| self.del(key) }
+class Cache < RedisClassy
+  def put(content)
+    pipelined do
+      set content
+      expire 5.seconds
+    end
   end
 end
 
-UniqueUser.sadd '2011-02-28', '123'
-UniqueUser.sadd '2011-02-28', '456'
-UniqueUser.sadd '2011-03-01', '789'
-
-UniqueUser.smembers '2011-02-28'
- => ["123", "456"]
-
-UniqueUser.keys
- => ["2011-02-28", "2011-03-01"]
-
-UniqueUser.nuke
-UniqueUser.keys
- => []
+cache = Cache.new(123)
+cache.put "This tape will self-destruct in five seconds. Good luck."
 ```
 
-In most cases you may be just fine with class methods, but by creating an instance with a key, even further binding is possible.
+Since the `on` method is added as a syntactic sugar for `new`, you can also run a command in one shot as well:
 
 ```ruby
-class Counter < Redis::Classy
-  def initialize(object)
-    super("#{object.class.name}:#{object.id}")
-  end
+Cache.on(123).persist
+```
+
+For convenience, singleton and predefined static keys are also supported.
+
+```ruby
+class Counter < RedisClassy
+  singleton
+end
+
+Counter.incr    # 'Counter:singleton' => '1'
+Counter.incr    # 'Counter:singleton' => '2'
+Counter.get     # => '2'
+```
+
+``` ruby
+class Stats < RedisClassy
+  singletons :median, :average
+end
+
+ages = [21,22,24,28,30]
+
+Stats.median.set  ages[ages.size/2]           # 'Stats:median'  => '24'
+Stats.average.set ages.inject(:+)/ages.size   # 'Stats:average' => '25'
+Stats.median.get    # => '24'
+Stats.average.get   # => '25'
+```
+
+Finally, you can also pass an arbitrary object that responds to `id` as a key. This is useful when used in combination with ActiveRecord, etc.
+
+```ruby
+class Lock < RedisClassy
 end
 
 class Room < ActiveRecord::Base
 end
 
-@room = Room.create
+room = Room.create
 
-counter = Counter.new(@room)
-counter.key
- => "Room:123"
-
-counter.incr
-counter.incr
-counter.get
- => "2"
+lock = Lock.new(room)
 ```
 
-You also have access to the non-namespaced, raw Redis instance via `Redis::Classy`.
+When you need an access to the non-namespaced, raw Redis keys, it's available as `RedisClass.keys`. Keep in mind that this method is very slow at O(N) computational complexity and potentially hazardous when you have many keys. [Read the details](http://redis.io/commands/keys).
 
 ```ruby
-Redis::Classy.keys
- => ["UniqueUser:2011-02-28", "UniqueUser:2011-03-01", "Counter:Room:123"]
+RedisClassy.keys
+=> ["Stats:median", "Stats:average", "Counter"]
 
-Redis::Classy.keys 'UniqueUser:*'
- => ["UniqueUser:2011-02-28", "UniqueUser:2011-03-01"]
-
-Redis::Classy.multi do
-  UniqueUser.sadd '2011-02-28', '123'
-  UniqueUser.sadd '2011-02-28', '456'
-end
+RedisClassy.keys 'Stats:*'
+=> ["Stats:median", "Stats:average"]
 ```
 
-Since the `db` attribute is a class instance variable, you can dynamically assign different databases for each class.
+Since the `redis` attribute is a class instance variable, you can dynamically assign different databases for each class, without affecting other classes.
 
 ```ruby
-UniqueUser.db = Redis::Namespace.new('UniqueUser', :redis => Redis.new(:host => 'another.host'))
+Cache.redis = Redis::Namespace.new('Cache', redis: Redis.new(host: 'another.host'))
 ```
 
 Unicorn support
@@ -162,11 +179,11 @@ If you run fork-based app servers such as **Unicorn** or **Passenger**, you need
 
 ```ruby
 after_fork do
-  Redis::Classy.db.client.reconnect
+  RedisClassy.redis.client.reconnect
 end
 ```
 
-Note that since Redis Classy assigns a namespaced Redis instance upon the inheritance event of each subclass (`class Something < Redis::Classy`), reconnecting the master (non-namespaced) connection that is referenced from all subclasses should probably be the safest and the most efficient way to survive a forking event.
+Note that since Redis Classy assigns a namespaced Redis instance upon the inheritance event of each subclass (`class Something < RedisClassy`), reconnecting the master (non-namespaced) connection that is referenced from all subclasses should probably be the safest and the most efficient way to survive a forking event.
 
 Reference
 ---------

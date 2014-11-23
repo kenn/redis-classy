@@ -1,5 +1,5 @@
 # -*- encoding: utf-8 -*-
-require File.expand_path('../lib/redis/classy/version', __FILE__)
+require File.expand_path('../lib/redis_classy/version', __FILE__)
 
 Gem::Specification.new do |gem|
   gem.authors       = ["Kenn Ejima"]
@@ -13,7 +13,7 @@ Gem::Specification.new do |gem|
   gem.test_files    = gem.files.grep(%r{^(test|spec|features)/})
   gem.name          = "redis-classy"
   gem.require_paths = ["lib"]
-  gem.version       = Redis::Classy::VERSION
+  gem.version       = RedisClassy::VERSION
 
   gem.add_runtime_dependency "redis-namespace", "~> 1.0"
   gem.add_development_dependency "rspec"
