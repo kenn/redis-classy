@@ -1,3 +1,3 @@
 require 'redis-namespace'
-require 'redis/classy'
-require 'redis/classy/version'
+require 'redis_classy'
+require 'redis_classy/version'
