@@ -2,6 +2,16 @@ class RedisClassy
   class << self
     attr_writer :redis
 
+    Redis::Namespace::COMMANDS.keys.each do |command|
+      define_method(command) do |*args, &block|
+        if @singleton
+          new('singleton').send(command, *args, &block)
+        else
+          redis.send(command, *args, &block)
+        end
+      end
+    end
+
     def redis
       @redis ||= begin
         if self == RedisClassy
@@ -23,10 +33,6 @@ class RedisClassy
 
     def singleton
       @singleton = true
-    end
-
-    def keys(pattern = nil)
-      redis.keys(pattern || '*')
     end
 
     def on(key)

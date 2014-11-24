@@ -117,4 +117,10 @@ describe RedisClassy do
     expect(Stats.median.get).to eq('24')
     expect(Stats.average.get).to eq('25')
   end
+
+  it 'handles multiple key commands' do
+    Something.mset :a, 1, :b, 2
+    expect(Something.mget(:a, :b)).to eq(['1', '2'])
+    expect(Something.mapped_mget(:a, :b)).to eq({'a' => '1', 'b' => '2'})
+  end
 end

@@ -1,3 +1,7 @@
+## 2.2.0 2014-11-23
+
+  * Class-level commands are forwarded again
+
 ## 2.1.0 2014-11-23
 
   * Lazy connection loading
