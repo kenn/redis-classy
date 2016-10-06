@@ -116,6 +116,8 @@ describe RedisClassy do
     Stats.average.set ages.inject(:+)/ages.size
     expect(Stats.median.get).to eq('24')
     expect(Stats.average.get).to eq('25')
+    expect(Stats.keys.map(&:to_sym)).to eq([:median, :average])
+    expect(Stats.singletons_keys).to eq([:median, :average])
   end
 
   it 'handles multiple key commands' do

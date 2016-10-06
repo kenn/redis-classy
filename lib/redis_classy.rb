@@ -15,24 +15,11 @@ class RedisClassy
     def redis
       @redis ||= begin
         if self == RedisClassy
-          nil
+          raise Error.new('RedisClassy.redis must be assigned first')
         else
-          raise Error.new('RedisClassy.redis is not assigned') if RedisClassy.redis.nil?
           Redis::Namespace.new(self.name, redis: RedisClassy.redis)
         end
       end
-    end
-
-    def singletons(*args)
-      args.each do |key|
-        define_singleton_method(key) do
-          new key
-        end
-      end
-    end
-
-    def singleton
-      @singleton = true
     end
 
     def on(key)
@@ -45,6 +32,24 @@ class RedisClassy
       else
         super
       end
+    end
+
+    # Singletons
+
+    attr_reader :singletons_keys
+
+    def singletons(*args)
+      args.each do |key|
+        @singletons_keys ||= []
+        @singletons_keys << key
+        define_singleton_method(key) do
+          new key
+        end
+      end
+    end
+
+    def singleton
+      @singleton = true
     end
   end
 
