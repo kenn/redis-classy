@@ -15,8 +15,11 @@ class RedisClassy
     def redis
       @redis ||= begin
         if self == RedisClassy
-          raise Error.new('RedisClassy.redis must be assigned first')
+          # only RedisClassy itself holds the raw non-namespaced Redis instance
+          nil
         else
+          # subclasses of RedisClassy
+          raise Error.new('RedisClassy.redis must be assigned first') if RedisClassy.redis.nil?
           Redis::Namespace.new(self.name, redis: RedisClassy.redis)
         end
       end

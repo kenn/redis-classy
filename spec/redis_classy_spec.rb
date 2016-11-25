@@ -125,4 +125,11 @@ describe RedisClassy do
     expect(Something.mget(:a, :b)).to eq(['1', '2'])
     expect(Something.mapped_mget(:a, :b)).to eq({'a' => '1', 'b' => '2'})
   end
+
+  it 'allows conditional assignment' do
+    RedisClassy.redis = nil
+    expect {
+      RedisClassy.redis ||= Redis.new(db: 15)
+    }.to_not raise_error
+  end
 end
