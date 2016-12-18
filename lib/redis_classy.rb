@@ -76,11 +76,12 @@ class RedisClassy
     end
   end
 
+  KEYLESS_COMMANDS = [:multi, :pipelined, :exec, :eval, :unwatch]
+
   def method_missing(command, *args, &block)
     if @redis.respond_to?(command)
-      parameters = @redis.method(command).parameters
-      if parameters.empty? || parameters.first.first == :block
-        # Keyless commands
+      case command
+      when *KEYLESS_COMMANDS
         @redis.send(command, *args, &block)
       else
         @redis.send(command, @key, *args, &block)

@@ -86,6 +86,14 @@ describe RedisClassy do
     expect(something.smembers).to eq(['1','2','3'])
   end
 
+  it 'handles watch' do
+    something = Something.new('foo')
+
+    something.watch do
+      something.unwatch
+    end
+  end
+
   it 'handles method_missing' do
     # class method
     expect { Something.bogus }.to raise_error(NoMethodError)
