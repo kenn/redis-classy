@@ -20,7 +20,7 @@ class RedisClassy
         else
           # subclasses of RedisClassy
           raise Error.new('RedisClassy.redis must be assigned first') if RedisClassy.redis.nil?
-          Redis::Namespace.new(self.name, redis: RedisClassy.redis)
+          Redis::Namespace.new(self.name, :redis => RedisClassy.redis)
         end
       end
     end
