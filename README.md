@@ -114,7 +114,7 @@ cache.put "This tape will self-destruct in five seconds. Good luck."
 Since the `on` method is added as a syntactic sugar for `new`, you can also run a command in one shot as well:
 
 ```ruby
-Cache.on(123).persist
+Cache.on(123).put
 ```
 
 For convenience, singleton and predefined static keys are also supported.
